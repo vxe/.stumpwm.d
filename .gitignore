@@ -1,0 +1,62 @@
+# Common Lisp compiled files
+*.fasl
+*.fas
+*.lib
+*.x86f
+*.dfsl
+*.lx32fsl
+*.lx64fsl
+*.sse2f
+*.abcl
+
+# ASDF/Quicklisp cache
+.fasls/
+*.asd.cache
+
+# Temporary files
+*~
+*.bak
+*.tmp
+.#*
+\#*#
+
+# Emacs backup files
+*~
+\#*\#
+.\#*
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# API keys (security)
+.env
+secrets.lisp
+api-keys.lisp
+
+# User-specific configuration
+local-config.lisp
+user-overrides.lisp
+
+# Development/debug files
+debug-output.txt
+trace.txt
+
+# Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+build/
+dist/
