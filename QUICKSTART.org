@@ -1,0 +1,669 @@
+#+TITLE: Claude-Integrated StumpWM - Quick Start Guide
+#+AUTHOR: Vijay Edwin
+#+DATE: 2024
+#+STARTUP: overview
+#+TODO: TODO DOING | DONE SKIP
+
+* Overview
+This is an interactive checklist for setting up your Claude-integrated Lisp desktop.
+You can track your progress by checking off items as you complete them.
+
+Press =TAB= to expand/collapse sections.
+Press =C-c C-c= on a checkbox to toggle it.
+
+* Prerequisites [0/5]
+** TODO [ ] Install StumpWM
+:PROPERTIES:
+:CATEGORY: Prerequisites
+:END:
+
+Choose your distribution:
+
+*** Debian/Ubuntu
+#+BEGIN_SRC bash
+sudo apt-get update
+sudo apt-get install -y stumpwm sbcl
+#+END_SRC
+
+*** Fedora/RHEL
+#+BEGIN_SRC bash
+sudo dnf install -y stumpwm sbcl
+#+END_SRC
+
+*** Arch Linux
+#+BEGIN_SRC bash
+sudo pacman -S stumpwm sbcl
+#+END_SRC
+
+*** Verify installation
+#+BEGIN_SRC bash
+which stumpwm
+sbcl --version
+#+END_SRC
+
+** TODO [ ] Install curl (for Claude API)
+:PROPERTIES:
+:CATEGORY: Prerequisites
+:END:
+
+#+BEGIN_SRC bash
+sudo apt-get install -y curl
+# Or: sudo dnf install -y curl
+# Or: sudo pacman -S curl
+#+END_SRC
+
+Verify:
+#+BEGIN_SRC bash
+curl --version
+#+END_SRC
+
+** TODO [ ] Get Claude API Key
+:PROPERTIES:
+:CATEGORY: Prerequisites
+:END:
+
+1. Visit https://console.anthropic.com
+2. Sign up or log in
+3. Navigate to "API Keys"
+4. Click "Create Key"
+5. Copy the key (starts with =sk-ant-api03-=)
+
+Store it temporarily here (this file is in .gitignore):
+: sk-ant-api03-YOUR-KEY-HERE
+
+** TODO [ ] Install Emacs (Optional but Recommended)
+:PROPERTIES:
+:CATEGORY: Prerequisites
+:END:
+
+#+BEGIN_SRC bash
+sudo apt-get install -y emacs
+# Or: sudo dnf install -y emacs
+# Or: sudo pacman -S emacs
+#+END_SRC
+
+Verify:
+#+BEGIN_SRC bash
+emacs --version
+#+END_SRC
+
+** TODO [ ] Install Git
+:PROPERTIES:
+:CATEGORY: Prerequisites
+:END:
+
+#+BEGIN_SRC bash
+sudo apt-get install -y git
+#+END_SRC
+
+Verify:
+#+BEGIN_SRC bash
+git --version
+#+END_SRC
+
+* Core Installation [0/4]
+** TODO [ ] Backup Existing Configuration
+:PROPERTIES:
+:CATEGORY: Installation
+:END:
+
+If you have an existing StumpWM configuration, back it up:
+
+#+BEGIN_SRC bash
+if [ -d ~/.stumpwm.d ]; then
+    echo "Backing up existing configuration..."
+    mv ~/.stumpwm.d ~/.stumpwm.d.backup.$(date +%Y%m%d-%H%M%S)
+    echo "Backup created at ~/.stumpwm.d.backup.$(date +%Y%m%d-%H%M%S)"
+else
+    echo "No existing configuration found. Proceeding..."
+fi
+#+END_SRC
+
+** TODO [ ] Clone/Copy Configuration
+:PROPERTIES:
+:CATEGORY: Installation
+:END:
+
+If this is a git repository:
+#+BEGIN_SRC bash
+git clone <repository-url> ~/.stumpwm.d
+#+END_SRC
+
+Or if you already have the files, verify they're in place:
+#+BEGIN_SRC bash
+ls -la ~/.stumpwm.d/
+#+END_SRC
+
+You should see:
+- init.lisp
+- config/
+- lib/
+- modules/
+- emacs/
+- docs/
+
+** TODO [ ] Set Claude API Key
+:PROPERTIES:
+:CATEGORY: Installation
+:END:
+
+*** Add to shell profile
+#+BEGIN_SRC bash
+echo 'export CLAUDE_API_KEY="sk-ant-api03-YOUR-KEY-HERE"' >> ~/.bashrc
+#+END_SRC
+
+Replace =sk-ant-api03-YOUR-KEY-HERE= with your actual key!
+
+*** Reload shell
+#+BEGIN_SRC bash
+source ~/.bashrc
+#+END_SRC
+
+*** Verify it's set
+#+BEGIN_SRC bash
+echo $CLAUDE_API_KEY
+#+END_SRC
+
+** TODO [ ] Configure X11 Startup
+:PROPERTIES:
+:CATEGORY: Installation
+:END:
+
+Create or edit =~/.xinitrc=:
+
+#+BEGIN_SRC bash
+cat > ~/.xinitrc <<'EOF'
+#!/bin/sh
+
+# Load X resources
+[ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
+
+# Set environment variables
+export CLAUDE_API_KEY="sk-ant-api03-YOUR-KEY-HERE"
+
+# Start StumpWM
+exec stumpwm
+EOF
+#+END_SRC
+
+Make it executable:
+#+BEGIN_SRC bash
+chmod +x ~/.xinitrc
+#+END_SRC
+
+* Optional Components [0/3]
+** TODO [ ] Install Quicklisp (for Swank/SLY)
+:PROPERTIES:
+:CATEGORY: Optional
+:END:
+
+*** Download Quicklisp
+#+BEGIN_SRC bash
+cd ~
+curl -O https://beta.quicklisp.org/quicklisp.lisp
+#+END_SRC
+
+*** Install
+#+BEGIN_SRC bash
+sbcl --load quicklisp.lisp <<EOF
+(quicklisp-quickstart:install)
+(ql:add-to-init-file)
+(quit)
+EOF
+#+END_SRC
+
+*** Install Swank
+#+BEGIN_SRC bash
+sbcl <<EOF
+(ql:quickload :swank)
+(quit)
+EOF
+#+END_SRC
+
+** TODO [ ] Install SLY in Emacs
+:PROPERTIES:
+:CATEGORY: Optional
+:END:
+
+1. Start Emacs: =emacs=
+2. Install package: =M-x package-install RET sly RET=
+3. Wait for installation to complete
+4. Quit Emacs: =C-x C-c=
+
+** TODO [ ] Configure Emacs Integration
+:PROPERTIES:
+:CATEGORY: Optional
+:END:
+
+Add to =~/.emacs= or =~/.emacs.d/init.el=:
+
+#+BEGIN_SRC elisp
+;; Add StumpWM integration modules to load path
+(add-to-list 'load-path (expand-file-name "~/.stumpwm.d/emacs"))
+
+;; Load StumpWM control
+(require 'stumpctl)
+
+;; Load Claude mode
+(require 'claude-mode)
+
+;; Enable Claude mode globally
+(global-claude-mode 1)
+
+;; Optional: Set API key if not in environment
+;; (setq claude-api-key "sk-ant-api03-...")
+
+;; Optional: Auto-connect to StumpWM on startup
+;; (add-hook 'emacs-startup-hook 'stumpctl-connect)
+#+END_SRC
+
+Save and restart Emacs.
+
+* First Launch [0/3]
+** TODO [ ] Start StumpWM
+:PROPERTIES:
+:CATEGORY: First Launch
+:END:
+
+*** From console (if not in X11)
+#+BEGIN_SRC bash
+startx
+#+END_SRC
+
+*** From display manager
+Select "StumpWM" from your login screen session menu.
+
+*** Verify startup
+You should see:
+- Welcome message
+- Mode line at top of screen
+- Black background (default)
+
+** TODO [ ] Test Basic Functionality
+:PROPERTIES:
+:CATEGORY: First Launch
+:END:
+
+*** Open command prompt
+Press =Super+X= (or =C-t :=)
+
+*** Check Claude status
+Type: =:claude-status= and press Enter
+
+You should see:
+: Claude Integration Status:
+: API Key: Set
+: Debug: ON
+: History: 0 conversations
+: Last: None
+
+*** Test Claude connection
+Type: =:claude-test= and press Enter
+
+You should see:
+: Success! Claude says: Connection successful.
+
+If you see an error, check:
+- [ ] API key is set correctly
+- [ ] curl is installed
+- [ ] Internet connection is working
+
+** TODO [ ] Test Basic Commands
+:PROPERTIES:
+:CATEGORY: First Launch
+:END:
+
+Try these keybindings:
+
+- [ ] =Super+Return= - Opens terminal
+- [ ] =Super+H/J/K/L= - Move focus between windows
+- [ ] =Super+V= - Split vertically
+- [ ] =Super+S= - Split horizontally
+- [ ] =Super+Q= - Close window
+- [ ] =Super+?= - Show help
+
+* Claude Integration Tests [0/5]
+** TODO [ ] Test Simple Query
+:PROPERTIES:
+:CATEGORY: Testing
+:END:
+
+Press =Super+Space= (this opens the Claude prompt)
+
+Type: =What windows do I have open?=
+
+Press Enter
+
+Claude should respond with information about your current desktop state.
+
+** TODO [ ] Test Context Gathering
+:PROPERTIES:
+:CATEGORY: Testing
+:END:
+
+Press =Super+X= and type: =:claude-context=
+
+You should see detailed information about:
+- Current window
+- Current workspace
+- All workspaces
+- Frame layout
+
+** TODO [ ] Test Command Execution
+:PROPERTIES:
+:CATEGORY: Testing
+:END:
+
+Press =Super+X= and type:
+: :claude-do Balance all windows
+
+Claude should generate code like:
+#+BEGIN_SRC lisp
+(stumpwm:balance-frames)
+#+END_SRC
+
+And execute it automatically. Your windows should rebalance.
+
+** TODO [ ] Test Code Generation
+:PROPERTIES:
+:CATEGORY: Testing
+:END:
+
+Press =Super+Space= and ask:
+: How do I create a horizontal split?
+
+Claude should explain and provide code like:
+#+BEGIN_SRC lisp
+(stumpwm:hsplit)
+#+END_SRC
+
+** TODO [ ] Test Workspace Management
+:PROPERTIES:
+:CATEGORY: Testing
+:END:
+
+Press =Super+Space= and command:
+: Show me all my workspaces
+
+Claude should list:
+- main
+- dev
+- web
+- comms
+- media
+
+* Emacs Integration Tests [0/4]
+:PROPERTIES:
+:CATEGORY: Testing
+:END:
+
+Skip this section if you didn't install Emacs integration.
+
+** TODO [ ] Start Swank Server
+:PROPERTIES:
+:CATEGORY: Emacs Integration
+:END:
+
+In StumpWM, press =Super+Ctrl+S=
+
+You should see:
+: Swank server started on port 4005
+: Connect from Emacs with: M-x sly-connect RET localhost RET
+
+** TODO [ ] Connect from Emacs
+:PROPERTIES:
+:CATEGORY: Emacs Integration
+:END:
+
+1. Start Emacs: =emacs=
+2. Connect to StumpWM: =M-x sly-connect RET localhost RET 4005 RET=
+3. You should see: "Connected to StumpWM!"
+
+** TODO [ ] Test StumpWM Control
+:PROPERTIES:
+:CATEGORY: Emacs Integration
+:END:
+
+In Emacs, try:
+
+=M-x stumpctl-message RET Hello from Emacs! RET=
+
+You should see the message appear in StumpWM.
+
+** TODO [ ] Test Claude in Emacs
+:PROPERTIES:
+:CATEGORY: Emacs Integration
+:END:
+
+In Emacs:
+
+=M-x claude-ask RET What is StumpWM? RET=
+
+A buffer should open with Claude's response.
+
+* Customization [0/3]
+** TODO [ ] Customize Theme
+:PROPERTIES:
+:CATEGORY: Customization
+:END:
+
+Edit =~/.stumpwm.d/config/theme.lisp=
+
+*** Change colors
+Find the =*theme-colors*= section and modify:
+#+BEGIN_SRC lisp
+(defparameter *theme-colors*
+  '(:bg0     "#1d2021"  ; Your color here
+    :bg1     "#282828"
+    :fg0     "#fbf1c7"
+    ...))
+#+END_SRC
+
+*** Reload
+Press =Super+X= and type: =:reload-config=
+
+** TODO [ ] Customize Keybindings
+:PROPERTIES:
+:CATEGORY: Customization
+:END:
+
+Edit =~/.stumpwm.d/config/keybindings.lisp=
+
+*** Add custom binding
+#+BEGIN_SRC lisp
+(define-key *top-map* (kbd "s-t") "terminal")
+#+END_SRC
+
+*** Reload
+Press =Super+X= and type: =:reload-config=
+
+** TODO [ ] Add Custom Commands
+:PROPERTIES:
+:CATEGORY: Customization
+:END:
+
+Edit =~/.stumpwm.d/config/commands.lisp=
+
+*** Create a command
+#+BEGIN_SRC lisp
+(defcommand my-workflow () ()
+  "My custom workflow."
+  (run-commands "exec firefox")
+  (sleep 1)
+  (run-commands "exec emacs"))
+#+END_SRC
+
+*** Bind it
+In =keybindings.lisp=:
+#+BEGIN_SRC lisp
+(define-key *top-map* (kbd "s-w") "my-workflow")
+#+END_SRC
+
+* Troubleshooting Checklist
+** Common Issues
+
+*** "Claude API key not configured"
+- [ ] Check: =echo $CLAUDE_API_KEY=
+- [ ] Ensure it's in =~/.bashrc=
+- [ ] Restart shell: =source ~/.bashrc=
+- [ ] Restart StumpWM
+
+*** "curl: command not found"
+- [ ] Install: =sudo apt-get install curl=
+
+*** "Swank server failed to start"
+- [ ] Install Quicklisp (see Optional Components)
+- [ ] Or disable: Set =*swank-auto-start* nil= in =config/core.lisp=
+
+*** "No response from Claude"
+- [ ] Check internet connection
+- [ ] Verify API key is valid
+- [ ] Check =~/.stumpwm.d/stumpwm.log= for errors
+- [ ] Test with: =:test-http-client=
+
+*** StumpWM won't start
+- [ ] Check =~/.xinitrc= syntax
+- [ ] Look for errors: =cat ~/.xsession-errors=
+- [ ] Test config: =sbcl --load ~/.stumpwm.d/init.lisp=
+
+* Learning Path [0/4]
+** TODO [ ] Read Core Documentation
+:PROPERTIES:
+:CATEGORY: Learning
+:END:
+
+- [ ] =README.md= - Project overview
+- [ ] =INSTALL.md= - Installation details
+- [ ] =docs/CLAUDE_INTEGRATION.md= - Usage guide
+- [ ] =docs/ARCHITECTURE.md= - Technical design
+
+** TODO [ ] Explore Example Commands
+:PROPERTIES:
+:CATEGORY: Learning
+:END:
+
+Try asking Claude:
+
+- [ ] "Show me all keybindings"
+- [ ] "What can you do?"
+- [ ] "Explain how StumpWM groups work"
+- [ ] "Create a coding workspace with 3 windows"
+- [ ] "What's the best way to organize my windows?"
+
+** TODO [ ] Experiment with REPL
+:PROPERTIES:
+:CATEGORY: Learning
+:END:
+
+If you set up Swank/SLY:
+
+1. Connect: =M-x sly-connect=
+2. Switch to REPL: =C-c C-z=
+3. Try:
+   #+BEGIN_SRC lisp
+   (in-package :stumpwm)
+   (current-window)
+   (group-windows (current-group))
+   (message "Hello from REPL!")
+   #+END_SRC
+
+** TODO [ ] Join the Community
+:PROPERTIES:
+:CATEGORY: Learning
+:END:
+
+- [ ] StumpWM Website: https://stumpwm.github.io/
+- [ ] StumpWM Wiki: https://github.com/stumpwm/stumpwm/wiki
+- [ ] IRC: #stumpwm on Libera.Chat
+- [ ] Claude API Docs: https://docs.anthropic.com/
+
+* Quick Reference
+** Essential Keybindings
+
+| Key                | Action                        |
+|--------------------+-------------------------------|
+| =Super+Space=      | Ask Claude                    |
+| =Super+Ctrl+Space= | Evaluate Lisp code            |
+| =Super+Ctrl+S=     | Start/stop Swank              |
+| =Super+Return=     | Terminal                      |
+| =Super+E=          | Emacs                         |
+| =Super+B=          | Browser                       |
+| =Super+H/J/K/L=    | Move focus (Vim-style)        |
+| =Super+Shift+H/J/K/L= | Move window                |
+| =Super+V=          | Vertical split                |
+| =Super+S=          | Horizontal split              |
+| =Super+=           | Balance frames                |
+| =Super+Q=          | Close window                  |
+| =Super+1-5=        | Switch workspace              |
+| =Super+X=          | Command prompt                |
+| =Super+?=          | Help                          |
+
+** Essential Commands
+
+| Command                     | Description                      |
+|-----------------------------+----------------------------------|
+| =:claude-ask <prompt>=      | Ask Claude anything              |
+| =:claude-do <command>=      | Execute command via Claude       |
+| =:claude-test=              | Test Claude connection           |
+| =:claude-status=            | Show status                      |
+| =:claude-context=           | Show desktop context             |
+| =:swank-start=              | Start Swank server               |
+| =:reload-config=            | Reload configuration             |
+
+** Files to Edit
+
+| File                          | Purpose                          |
+|-------------------------------+----------------------------------|
+| =config/core.lisp=            | Settings, API key config         |
+| =config/theme.lisp=           | Colors, fonts                    |
+| =config/keybindings.lisp=     | All keybindings                  |
+| =config/commands.lisp=        | Custom commands                  |
+| =modules/claude-commands.lisp= | Add Claude commands             |
+
+* Next Steps
+
+After completing this guide, you're ready to:
+
+1. *Use Claude daily*: Press =Super+Space= and ask questions or give commands
+2. *Customize*: Edit config files to match your workflow
+3. *Learn Lisp*: Use the REPL to explore and experiment
+4. *Integrate Emacs*: Use =claude-mode= and =stumpctl= for deep integration
+5. *Share*: Contribute your custom commands and workflows!
+
+* Progress Summary
+
+Total tasks: [0/27]
+
+- Prerequisites: [0/5]
+- Core Installation: [0/4]
+- Optional Components: [0/3]
+- First Launch: [0/3]
+- Claude Integration Tests: [0/5]
+- Emacs Integration Tests: [0/4]
+- Customization: [0/3]
+
+Once all checkboxes are complete, you'll have a fully functional
+Claude-integrated Lisp desktop environment!
+
+* Notes
+** Tips
+- Use =C-c C-c= on a checkbox to toggle it
+- Use =TAB= to fold/unfold sections
+- Use =S-TAB= to cycle global visibility
+- Copy code blocks and execute them in your terminal
+- Save this file to track your progress
+
+** Getting Help
+- Run =:claude-ask How do I...?= for any questions
+- Check =~/.stumpwm.d/stumpwm.log= for errors
+- Read the docs in =~/.stumpwm.d/docs/=
+
+** License
+GPLv3 - See LICENSE file
+
+** Author
+Vijay Edwin
+
+---
+
+Good luck, and welcome to the future of Lisp desktop computing! 🚀
