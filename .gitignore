@@ -46,6 +46,9 @@ api-keys.lisp
 local-config.lisp
 user-overrides.lisp
 
+# Symlink (created at install time, points to config.lisp)
+config
+
 # Development/debug files
 debug-output.txt
 trace.txt

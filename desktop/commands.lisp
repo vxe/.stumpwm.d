@@ -1,4 +1,4 @@
-;;;; config/commands.lisp --- Custom StumpWM Commands
+;;;; desktop/commands.lisp --- Custom StumpWM Commands
 ;;;;
 ;;;; User-defined commands for window management and system control.
 ;;;;
@@ -37,6 +37,10 @@
 
 (defcommand browser () ()
   "Launch a web browser."
+  (run-or-raise "firefox" '(:class "Firefox")))
+
+(defcommand firefox () ()
+  "Launch Firefox web browser."
   (run-or-raise "firefox" '(:class "Firefox")))
 
 (defcommand emacs () ()

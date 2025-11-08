@@ -1,4 +1,4 @@
-;;;; config/core.lisp --- Core StumpWM Configuration
+;;;; desktop/core.lisp --- Core StumpWM Configuration
 ;;;;
 ;;;; Basic window manager settings and behavior configuration.
 ;;;;
@@ -16,10 +16,23 @@
 (setf *mouse-focus-policy* :click) ; :click, :ignore, or :sloppy
 
 ;; Window border width
-(setf *window-border-style* :thin)  ; :thin, :thick, :tight, or :none
-(setf *normal-border-width* 2)
-(setf *maxsize-border-width* 2)
-(setf *transient-border-width* 2)
+(setf *window-border-style* :none)  ; :thin, :thick, :tight, or :none
+(setf *normal-border-width* 0)
+(setf *maxsize-border-width* 0)
+(setf *transient-border-width* 0)
+
+;; Remove gaps and frame borders
+(setf *head-border-width* 0)
+(setf *internal-border-width* 0)
+(setf *frame-outline-width* 0)
+
+;; Remove mode line padding
+(setf *mode-line-pad-x* 0)
+(setf *mode-line-pad-y* 0)
+
+;; Disable frame indicator
+(setf *frame-indicator-timer* 0)
+(setf *frame-indicator-text* "")
 
 ;; Message window settings
 (setf *message-window-gravity* :top-right)
@@ -76,8 +89,7 @@
 ;; Mode line colors are set in theme.lisp
 
 ;; Enable mode line on all screens
-(if (not (head-mode-line (current-head)))
-    (toggle-mode-line (current-screen) (current-head)))
+(enable-mode-line (current-screen) (current-head) t)
 
 ;;;; ===========================================================================
 ;;;; Window Formatting

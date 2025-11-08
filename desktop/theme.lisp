@@ -1,4 +1,4 @@
-;;;; config/theme.lisp --- Visual Theme Configuration
+;;;; desktop/theme.lisp --- Visual Theme Configuration
 ;;;;
 ;;;; Colors, fonts, and visual appearance for StumpWM.
 ;;;;
@@ -55,10 +55,10 @@
 ;;;; ===========================================================================
 
 ;; Focused window border
-(set-focus-color (theme-color :blue))
+(set-focus-color "black")
 
 ;; Unfocused window border
-(set-unfocus-color (theme-color :bg2))
+(set-unfocus-color "black")
 
 ;; Floating window border
 (set-float-focus-color (theme-color :purple))
@@ -70,7 +70,7 @@
 
 (set-fg-color (theme-color :fg1))
 (set-bg-color (theme-color :bg1))
-(set-border-color (theme-color :blue))
+(set-border-color "black")
 
 ;;;; ===========================================================================
 ;;;; Mode Line Colors
@@ -87,8 +87,9 @@
 ;;;; Frame Indicator (for split frames)
 ;;;; ===========================================================================
 
-(setf *frame-indicator-text* " %s "
-      *frame-indicator-color* (theme-color :blue))
+;; Frame indicator settings are in core.lisp
+;; (setf *frame-indicator-text* " %s "
+;;       *frame-indicator-color* (theme-color :blue))
 
 ;;;; ===========================================================================
 ;;;; Color Formatter for Messages

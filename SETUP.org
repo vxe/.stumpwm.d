@@ -1,0 +1,145 @@
+#+TITLE: StumpWM Desktop Environment - Setup Guide
+#+AUTHOR: Your Name
+#+DATE: 2025-11-08
+
+* Quick Install (Fresh System)
+
+#+BEGIN_SRC bash
+# 1. Clone the repo
+git clone <your-repo-url> ~/.stumpwm.d
+
+# 2. Run bootstrap
+cd ~/.stumpwm.d
+./bootstrap.sh
+
+# 3. Log out and select StumpWM session
+#+END_SRC
+
+* Directory Structure
+
+#+BEGIN_SRC text
+~/.stumpwm.d/              # Main repo (under version control)
+├── config.lisp            # Main config file (EDIT THIS ONE!)
+├── config -> config.lisp  # Symlink (created by bootstrap)
+├── desktop/               # Modular config (alternative approach)
+│   ├── core.lisp          # WM behavior, workspaces, settings
+│   ├── theme.lisp         # Colors, fonts, appearance
+│   ├── commands.lisp      # Custom commands
+│   └── keybindings.lisp   # Key mappings
+├── init.lisp              # Modular entry point (alternative)
+├── modules/               # Claude integration backend
+├── lib/                   # Utility libraries
+├── emacs/                 # Emacs integration
+└── bootstrap.sh           # Fresh install setup script
+#+END_SRC
+
+* How It Works
+
+1. *StumpWM* looks for config at =~/.config/stumpwm/config=
+2. *Symlink*: =~/.config/stumpwm= → =~/.stumpwm.d=
+3. *Symlink*: =~/.stumpwm.d/config= → =config.lisp=
+4. *Result*: StumpWM loads =~/.stumpwm.d/config.lisp=
+
+* Modifying Configuration
+
+Edit the main config file:
+
+#+BEGIN_SRC bash
+# Edit config (single file - simple approach)
+vim ~/.stumpwm.d/config.lisp
+
+# Reload in StumpWM
+# Press: C-t ; loadrc
+#+END_SRC
+
+*Alternative*: Use the modular approach by editing =desktop/*.lisp= and switching the config symlink to point to =init.lisp= instead of =config.lisp=.
+
+* Version Control Workflow
+
+#+BEGIN_SRC bash
+cd ~/.stumpwm.d
+
+# Make changes to config.lisp
+vim config.lisp
+
+# Reload to test
+# (In StumpWM: C-t ; loadrc)
+
+# Commit when happy
+git add -A
+git commit -m "Update configuration"
+git push
+#+END_SRC
+
+* Fresh Install Restoration
+
+On a new machine:
+
+#+BEGIN_SRC bash
+git clone <your-repo> ~/.stumpwm.d
+cd ~/.stumpwm.d
+./bootstrap.sh
+# Log out → Select StumpWM → Done!
+#+END_SRC
+
+* Key Features
+
+** No White Bars
+The config removes all gaps, borders, and frame indicators:
+- =*internal-border-width*= = 0
+- =*frame-outline-width*= = 0
+- =*window-border-style*= = :none
+- Focus colors set to black
+
+** Modular Design
+- =desktop/= - Settings you'll frequently modify (alternative modular approach)
+- =modules/= - Claude integration (rarely touched)
+- =lib/= - Utility code (rarely touched)
+- =config.lisp= - Main config (simple single-file approach)
+
+** Local Overrides
+Create =~/.stumpwm.d/local-config.lisp= for machine-specific settings:
+- Not tracked in git (in .gitignore)
+- Loaded automatically if present
+- Perfect for local paths, API keys, etc.
+
+* Troubleshooting
+
+** Config not loading
+#+BEGIN_SRC bash
+# Check symlinks
+ls -la ~/.config/stumpwm  # Should point to ~/.stumpwm.d
+ls -la ~/.stumpwm.d/config  # Should point to config.lisp
+
+# Check logs
+journalctl --since "10 min ago" | grep -i stump
+#+END_SRC
+
+** After config changes
+Some settings need full restart:
+#+BEGIN_SRC text
+C-t ; restart-soft
+#+END_SRC
+
+** Testing changes
+#+BEGIN_SRC bash
+# From terminal (won't work, but shows syntax errors)
+cd ~/.stumpwm.d
+sbcl --load config.lisp  # Will error on (in-package :stumpwm) - that's OK
+
+# Real test: reload in StumpWM
+# C-t ; loadrc
+#+END_SRC
+
+* Next Steps
+
+1. Customize =config.lisp= to add your own commands and keybindings
+2. Configure Claude API key for AI integration
+3. Set up Swank for Emacs REPL access
+4. Explore the modular =desktop/*.lisp= approach if preferred
+
+* Resources
+
+- StumpWM Manual: =info stumpwm=
+- This repo's docs: =docs/=
+- Quick start: =QUICKSTART.org=

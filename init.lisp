@@ -47,7 +47,7 @@
 ;;;; ===========================================================================
 
 ;; Load core settings first
-(load-config-file "config/core.lisp")
+(load-config-file "desktop/core.lisp")
 
 ;;;; ===========================================================================
 ;;;; Library Loading
@@ -74,13 +74,13 @@
 ;;;; ===========================================================================
 
 ;; Load theme and visual configuration
-(load-config-file "config/theme.lisp")
+(load-config-file "desktop/theme.lisp")
 
 ;; Load custom commands
-(load-config-file "config/commands.lisp")
+(load-config-file "desktop/commands.lisp")
 
 ;; Load keybindings last (so all commands are defined)
-(load-config-file "config/keybindings.lisp")
+(load-config-file "desktop/keybindings.lisp")
 
 ;;;; ===========================================================================
 ;;;; Post-Initialization

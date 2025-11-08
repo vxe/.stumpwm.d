@@ -1,4 +1,4 @@
-;;;; config/keybindings.lisp --- Keybinding Configuration
+;;;; desktop/keybindings.lisp --- Keybinding Configuration
 ;;;;
 ;;;; All keybindings for the Claude-integrated desktop environment.
 ;;;;
@@ -133,6 +133,7 @@
 (define-key *root-map* (kbd "c") "terminal")
 (define-key *root-map* (kbd "e") "emacs")
 (define-key *root-map* (kbd "b") "browser")
+(define-key *root-map* (kbd "f") "firefox")
 
 ;; System
 (define-key *root-map* (kbd "q") "restart-wm")
