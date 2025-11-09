@@ -1,0 +1,164 @@
+#+TITLE: StumpWM Eval System Files
+#+AUTHOR: Your Name
+#+DATE: 2025-11-09
+
+* Overview
+
+This directory contains the safe file-based eval system for StumpWM.
+
+** Files
+
+- =stumpwm-eval.lisp= - Common Lisp module for StumpWM
+- =stumpwm-eval= - Shell script wrapper for easy command-line use
+
+* Installation
+
+** 1. Install the Lisp Module
+
+#+BEGIN_SRC bash
+mkdir -p ~/.stumpwm.d/modules
+cp stumpwm-eval.lisp ~/.stumpwm.d/modules/
+#+END_SRC
+
+** 2. Update StumpWM Config
+
+Add to =~/.stumpwm.d/init.lisp=:
+
+#+BEGIN_SRC lisp
+;;;; File-Based Eval Module (for Claude AI integration)
+(let ((eval-module (merge-pathnames "modules/stumpwm-eval.lisp"
+                                    (stumpwm::data-dir))))
+  (when (probe-file eval-module)
+    (handler-case
+        (progn
+          (load eval-module)
+          ;; Auto-start the watcher
+          (stumpwm::start-eval-watcher))
+      (error (e)
+        (message (format nil "^1✗ Failed to load eval module: ~A^n" e))))))
+#+END_SRC
+
+** 3. Install Shell Script
+
+#+BEGIN_SRC bash
+sudo cp stumpwm-eval /usr/local/bin/
+sudo chmod +x /usr/local/bin/stumpwm-eval
+#+END_SRC
+
+** 4. Restart StumpWM
+
+Log out and log back in, or reload your config.
+
+* Usage
+
+** From Shell
+
+#+BEGIN_SRC bash
+# Test the eval system
+stumpwm-eval '(+ 1 2)'
+
+# Get current window title
+stumpwm-eval '(window-title (current-window))'
+
+# Launch Firefox
+stumpwm-eval '(run-or-raise "firefox" '\''(:class "Firefox")'\'')'
+
+# Split window
+stumpwm-eval '(hsplit)'
+
+# Get all window titles
+stumpwm-eval '(mapcar #'\''window-title (group-windows (current-group)))'
+#+END_SRC
+
+** From StumpWM
+
+Commands:
+- =C-t ; eval-watcher-start= - Start the eval watcher
+- =C-t ; eval-watcher-stop= - Stop the eval watcher
+- =C-t ; eval-watcher-status= - Show status
+- =C-t ; eval-watcher-show-errors= - View error log
+
+* For Claude AI
+
+This is the **primary method** for Claude Code sessions to develop and debug StumpWM features.
+
+Use cases:
+- Query window manager state
+- Test new commands
+- Debug issues
+- Develop features interactively
+
+* Safety Features
+
+- ✅ Cannot crash StumpWM - Triple-layered error handling
+- ✅ Low CPU overhead - 2 second poll interval
+- ✅ Thread-safe - Lock file prevents race conditions
+- ✅ Detailed logging - Errors logged to =/tmp/stumpwm-eval-errors.log=
+- ✅ Easy recovery - Can stop/start without restart
+- ✅ Memory safe - Output truncated to 10KB max
+
+* Documentation
+
+See =stumpwm-eval.org= in the parent directory for:
+- Complete technical documentation
+- Why the previous version crashed
+- Testing procedures
+- Troubleshooting guide
+
+* Quick Status Check
+
+#+BEGIN_SRC bash
+# Check if eval watcher is running
+stumpwm-eval '(if stumpwm::*eval-watcher-running* "RUNNING" "STOPPED")'
+
+# View error log
+cat /tmp/stumpwm-eval-errors.log
+#+END_SRC
+
+* Troubleshooting
+
+** "Timeout waiting for result"
+
+- Eval watcher not started: =C-t ; eval-watcher-start=
+- Check if StumpWM is running: =pgrep stumpwm=
+
+** "Eval system is busy"
+
+- Another eval in progress, wait and retry
+- Stale lock clears automatically after 10s
+
+** Errors in eval
+
+Check the error log:
+
+#+BEGIN_SRC bash
+cat /tmp/stumpwm-eval-errors.log
+#+END_SRC
+
+* Technical Details
+
+- **Poll interval:** 2 seconds
+- **Error handling:** 3 layers (outer, processing, eval)
+- **Lock timeout:** 10 seconds
+- **Max output:** 10KB (truncated with warning)
+- **File locations:**
+  - Input: =/tmp/stumpwm-eval-input=
+  - Output: =/tmp/stumpwm-eval-output=
+  - Lock: =/tmp/stumpwm-eval.lock=
+  - Errors: =/tmp/stumpwm-eval-errors.log=
+
+* Version History
+
+** v2.0 (2025-11-09) - Safe version with triple error handling
+
+- Fixed crash loop from v1.0
+- Changed from 0.1s to 2s poll interval (20x less overhead)
+- Added lock file for race condition prevention
+- Added comprehensive error logging
+- Added commands to start/stop without restart
+
+** v1.0 (BROKEN) - Initial attempt
+
+- 0.1s poll interval caused high CPU usage
+- Single error handler insufficient
+- Caused crash loop on StumpWM startup
