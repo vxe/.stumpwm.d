@@ -95,39 +95,114 @@ exec stumpwm
 
 ```
 .stumpwm.d/
-├── init.lisp                      # Main entry point
-├── config/
-│   ├── core.lisp                  # Core StumpWM settings
-│   ├── keybindings.lisp           # Keybinding definitions
-│   ├── theme.lisp                 # Visual theme
-│   └── commands.lisp              # Custom commands
+├── init.lisp                      # Main entry point (loads everything)
+├── desktop/
+│   ├── core.lisp                  # Core settings (gaps, borders, groups)
+│   ├── keys.lisp                  # Commands + keybindings together
+│   ├── theme.lisp                 # Colors and visual theme
+│   └── formatters.lisp            # Modeline formatters
 ├── modules/
+│   ├── stumpwm-eval.lisp          # File-based eval system (CRITICAL)
+│   ├── claude-swank.lisp          # Swank/SLY setup
 │   ├── claude-integration.lisp    # Claude API integration
 │   ├── claude-commands.lisp       # Claude-specific commands
-│   ├── claude-swank.lisp          # Swank/SLY setup
 │   └── context-gathering.lisp     # Workspace context extraction
 ├── lib/
-│   ├── http-client.lisp           # HTTP client for API calls
-│   ├── utils.lisp                 # Utility functions
-│   └── json.lisp                  # JSON encoding/decoding
+│   ├── utils.lisp                 # Utility functions (loaded FIRST)
+│   └── http-client.lisp           # HTTP client for API calls
 ├── emacs/
-│   ├── stumpctl.el                # Control StumpWM from Emacs
-│   └── claude-mode.el             # Claude integration for Emacs
+│   └── (future Emacs integration)
 └── docs/
-    ├── ARCHITECTURE.md            # Design documentation
-    ├── CLAUDE_INTEGRATION.md      # Claude setup guide
-    └── API.md                     # API reference
+    └── (documentation)
+```
+
+### Critical: init.lisp Load Order
+
+**Load order matters!** Dependencies must load before consumers:
+
+1. **Quicklisp** - Required for installing packages
+2. **Swank** - REPL server (port 4005) for Emacs SLY
+3. **stumpwm-eval** - File-based eval (critical for debugging)
+4. **lib/utils.lisp** - Helper functions (log-*, json-*, etc.)
+5. **desktop/core.lisp** - Core settings
+6. **desktop/theme.lisp** - Visual configuration
+7. **desktop/formatters.lisp** - Modeline formatters
+8. **desktop/keys.lisp** - Commands and keybindings LAST
+
+## What's Working Now
+
+✅ **Auto-Loading Services**:
+- Swank server (port 4005) - starts automatically
+- stumpwm-eval watcher - starts automatically
+- All configuration files load in correct order
+
+✅ **Keybindings**:
+- M-DEL (Option+Backspace) - Prefix key
+- M-e - Launch/raise Emacs
+- M-f - Launch/raise Firefox
+- M-t - Launch/raise Kitty terminal
+- M-o - Launch/raise OBS
+
+✅ **Developer Tools**:
+- `stumpwm-eval 'CODE'` - Execute Lisp from shell
+- Swank REPL - Connect from Emacs with `M-x sly-connect`
+- `loadrc` - Reload config without restart
+
+## Troubleshooting
+
+### Configuration Not Loading After Restart
+
+If your keybindings don't work after restart:
+
+```bash
+# 1. Check swank is running
+nc -v localhost 4005
+
+# 2. Check stumpwm-eval works
+stumpwm-eval '(+ 1 2)'
+# Should return: 3
+
+# 3. Check keybindings are loaded
+stumpwm-eval '(fboundp (quote kitty))'
+# Should return: #<FUNCTION KITTY>
+
+# 4. Check key is bound
+stumpwm-eval '(stumpwm::lookup-key stumpwm::*top-map* (stumpwm::kbd "M-t"))'
+# Should return: 3 (key object)
+```
+
+If any of these fail, check `~/.stumpwm.d/init.lisp` load order.
+
+### Swank Not Starting
+
+```bash
+# Install swank via quicklisp
+sbcl --eval '(ql:quickload :swank)' --quit
+
+# Restart StumpWM
+# In StumpWM: M-DEL ; restart
+```
+
+### stumpwm-eval Timeout
+
+```bash
+# Check if eval watcher is running
+ls -la /tmp/stumpwm-eval*
+
+# If files missing, watcher not running
+# In StumpWM: M-DEL ; eval-watcher-start
 ```
 
 ## Milestones
 
 - [x] Setup SLY + StumpWM integration (Swank server)
-- [x] Claude bridge prototype (HTTP API wrapper)
-- [x] In-StumpWM Claude prompt (keybinding + command interface)
+- [x] stumpwm-eval file-based system (shell debugging)
+- [x] Auto-starting services on loadrc
+- [x] Option key launchers (M-e, M-f, M-t, M-o)
+- [x] Borderless windows, zero gaps
+- [ ] Claude integration (API calls)
 - [ ] Emacs integration (stumpctl.el + claude-mode)
 - [ ] Context-aware prompts (current app/file awareness)
-- [ ] Voice invocation support
-- [ ] Persistent Claude REPL buffer
 
 ## Configuration
 

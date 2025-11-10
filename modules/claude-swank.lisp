@@ -162,7 +162,10 @@
   (load-quicklisp))
 
 ;; Auto-start Swank if configured
-(when (and *swank-auto-start* (not *swank-server-running*))
+;; NOTE: *swank-auto-start* is defined in desktop/core.lisp and defaults to nil
+(when (and (boundp '*swank-auto-start*)
+           *swank-auto-start*
+           (not *swank-server-running*))
   (log-info "Auto-starting Swank server")
   (start-swank-server))
 
