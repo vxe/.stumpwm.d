@@ -97,6 +97,12 @@
 (load-module "clipboard-history")
 (load-module "winner-mode")
 
+;; Hook to save layouts on frame changes
+(add-hook *post-command-hook*
+  (lambda (command)
+    (when (member command winner-mode:*default-commands*)
+      (winner-mode:dump-group-to-file))))
+
 ;;;; ===========================================================================
 ;;;; PRIORITY 4: File-Based Eval System (for stumpwm-eval command)
 ;;;; ===========================================================================
@@ -284,6 +290,12 @@
       (message "^2✓ Clipboard history started^n"))
   (error (e)
     (message (format nil "^1✗ Clipboard history error: ~A^n" e))))
+
+;;;; ===========================================================================
+;;;; Keyboard Remapping (Load Xmodmap)
+;;;; ===========================================================================
+
+(run-shell-command "xmodmap ~/.Xmodmap")
 
 ;;;; ===========================================================================
 ;;;; Completion Message
