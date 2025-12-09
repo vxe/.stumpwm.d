@@ -274,6 +274,7 @@
 
 ;; Core utilities and settings
 (safe-load "lib/utils.lisp")
+(safe-load "lib/infra.lisp")
 (safe-load "lib/ui.lisp")
 (safe-load "desktop/theme.lisp")
 (safe-load "desktop/formatters.lisp")
