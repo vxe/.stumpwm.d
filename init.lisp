@@ -279,8 +279,27 @@
 (safe-load "desktop/theme.lisp")
 (safe-load "desktop/formatters.lisp")
 
-;; Enable mode line on all screens (after formatters are loaded)
-(enable-mode-line (current-screen) (current-head) t)
+;;;; ===========================================================================
+;;;; Polybar Integration (replaces StumpWM mode-line)
+;;;; ===========================================================================
+
+;; Disable StumpWM mode-line (Polybar will replace it)
+(enable-mode-line (current-screen) (current-head) nil)
+
+;; Float Polybar window so StumpWM doesn't tile it
+(defun float-polybar (win)
+  "Float Polybar window when it appears."
+  (when (string= (window-class win) "Polybar")
+    (float-window win (current-group))))
+
+(add-hook *new-window-hook* 'float-polybar)
+
+;; Launch Polybar on startup
+(run-shell-command "polybar stumpwm &")
+
+;; Launch system tray applets
+(run-shell-command "nm-applet &")
+(run-shell-command "dropbox start -i &")
 
 ;; Commands and keybindings (M-DEL prefix, M-e/M-f/M-t/M-o launchers)
 (safe-load "desktop/keys.lisp")
