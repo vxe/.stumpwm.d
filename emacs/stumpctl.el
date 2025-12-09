@@ -26,13 +26,13 @@
   :group 'tools
   :prefix "stumpctl-")
 
-(defcustom stumpctl-swank-port 4005
-  "Port for Swank server running in StumpWM."
+(defcustom stumpctl-slynk-port 4005
+  "Port for Slynk server running in StumpWM."
   :type 'integer
   :group 'stumpctl)
 
-(defcustom stumpctl-swank-host "localhost"
-  "Host for Swank server running in StumpWM."
+(defcustom stumpctl-slynk-host "localhost"
+  "Host for Slynk server running in StumpWM."
   :type 'string
   :group 'stumpctl)
 
@@ -44,22 +44,23 @@
 (defun stumpctl-connected-p ()
   "Check if connected to StumpWM via SLY."
   (and stumpctl--connection
-       (sly-connected-p stumpctl--connection)))
+       (sly-connected-p)
+       (eq stumpctl--connection (sly-current-connection))))
 
 (defun stumpctl-connect ()
-  "Connect to StumpWM's Swank server."
+  "Connect to StumpWM's Slynk server."
   (interactive)
   (if (stumpctl-connected-p)
       (message "Already connected to StumpWM")
     (progn
       (message "Connecting to StumpWM on %s:%d..."
-               stumpctl-swank-host stumpctl-swank-port)
-      (sly-connect stumpctl-swank-host stumpctl-swank-port)
+               stumpctl-slynk-host stumpctl-slynk-port)
+      (sly-connect stumpctl-slynk-host stumpctl-slynk-port)
       (setq stumpctl--connection (sly-current-connection))
       (message "Connected to StumpWM!"))))
 
 (defun stumpctl-disconnect ()
-  "Disconnect from StumpWM's Swank server."
+  "Disconnect from StumpWM's Slynk server."
   (interactive)
   (when (stumpctl-connected-p)
     (sly-disconnect stumpctl--connection)
