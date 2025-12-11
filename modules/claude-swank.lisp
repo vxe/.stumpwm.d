@@ -4,7 +4,7 @@
 ;;;; This allows live coding and debugging of StumpWM while it's running.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Swank Server State

@@ -5,7 +5,7 @@
 ;;;; Slynk is preferred as it's more modern.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; REPL Server State

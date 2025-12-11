@@ -4,7 +4,7 @@
 ;;;; Handles API communication, context injection, and response execution.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; System Prompt

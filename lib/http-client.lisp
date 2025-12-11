@@ -4,7 +4,7 @@
 ;;;; Uses external tools (curl) as StumpWM doesn't have built-in HTTP support.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; HTTP Client Configuration

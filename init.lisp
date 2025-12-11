@@ -3,7 +3,7 @@
 ;;;; Loads swank FIRST for interactive development, then everything else
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; PRIORITY 1: Load Quicklisp (required for swank)
@@ -18,50 +18,53 @@
       (error (e)
         (message (format nil "✗ Quicklisp failed: ~A" e))))))
 
-;;;; ===========================================================================
-;;;; PRIORITY 2: Start Slynk Server IMMEDIATELY
-;;;; ===========================================================================
+;; ;;;; ===========================================================================
+;; ;;;; PRIORITY 2: Start Slynk Server IMMEDIATELY
+;; ;;;; ===========================================================================
 
-(handler-case
-    (progn
-      (message "Loading Slynk...")
+;; (handler-case
+;;     (progn
+;;       (message "Loading Slynk...")
 
-      ;; Load slynk via quicklisp
-      (unless (find-package :slynk)
-        (if (find-package :quicklisp)
-            (funcall (intern "QUICKLOAD" :quicklisp) :slynk)
-            (asdf:load-system :slynk)))
+;;       ;; Load slynk via quicklisp
+;;       (unless (find-package :slynk)
+;;         (if (find-package :quicklisp)
+;;             (funcall (intern "QUICKLOAD" :quicklisp) :slynk)
+;;             (asdf:load-system :slynk)))
 
-      ;; Start the server
-      (let ((slynk-package (find-package :slynk)))
-        (when slynk-package
-          (let ((create-server (intern "CREATE-SERVER" slynk-package)))
-            (funcall create-server :port 4005 :dont-close t)
-            (message "^B^2✓ Slynk server running on port 4005^n")
-            (message "Connect: M-x sly-connect RET localhost RET 4005 RET")))))
-  (error (e)
-    (message (format nil "^1✗ Slynk failed: ~A^n" e))
-    (message "To fix: In a terminal run: sbcl --eval '(ql:quickload :slynk)' --quit")))
+;;       ;; Start the server in a separate thread (required for Slynk)
+;;       (let ((slynk-package (find-package :slynk)))
+;;         (when slynk-package
+;;           (let ((create-server (intern "CREATE-SERVER" slynk-package)))
+;;             (sb-thread:make-thread
+;;              (lambda ()
+;;                (funcall create-server :port 4005 :dont-close t))
+;;              :name "slynk-server")
+;;             (message "^B^2✓ Slynk server running on port 4005^n")
+;;             (message "Connect: M-x sly-connect RET localhost RET 4005 RET")))))
+;;   (error (e)
+;;     (message (format nil "^1✗ Slynk failed: ~A^n" e))
+;;     (message "To fix: In a terminal run: sbcl --eval '(ql:quickload :slynk)' --quit")))
 
-;;;; ===========================================================================
-;;;; Dynamic Swank/Slynk Port Command
-;;;; ===========================================================================
+;; ;;;; ===========================================================================
+;; ;;;; Dynamic Swank/Slynk Port Command
+;; ;;;; ===========================================================================
 
-(defcommand swank-dynamic (port) ((:string "Port number: "))
-  "Start a Swank server on a custom port"
-  (handler-case
-      (sb-thread:make-thread
-       (lambda ()
-         (let ((swank-package (find-package :swank)))
-           (if swank-package
-               (let ((create-server (intern "CREATE-SERVER" swank-package)))
-                 (funcall create-server :port (parse-integer port) :dont-close t)
-                 (message (format nil "^2✓ Swank server running on port ~A^n" port))
-                 (message (format nil "Connect: M-x sly-connect RET localhost RET ~A RET" port)))
-               (message "^1✗ Swank package not loaded^n"))))
-       :name (format nil "swank-~A" port))
-    (error (e)
-      (message (format nil "^1✗ Failed to start Swank on port ~A: ~A^n" port e)))))
+;; (defcommand swank-dynamic (port) ((:string "Port number: "))
+;;   "Start a Swank server on a custom port"
+;;   (handler-case
+;;       (sb-thread:make-thread
+;;        (lambda ()
+;;          (let ((swank-package (find-package :swank)))
+;;            (if swank-package
+;;                (let ((create-server (intern "CREATE-SERVER" swank-package)))
+;;                  (funcall create-server :port (parse-integer port) :dont-close t)
+;;                  (message (format nil "^2✓ Swank server running on port ~A^n" port))
+;;                  (message (format nil "Connect: M-x sly-connect RET localhost RET ~A RET" port)))
+;;                (message "^1✗ Swank package not loaded^n"))))
+;;        :name (format nil "swank-~A" port))
+;;     (error (e)
+;;       (message (format nil "^1✗ Failed to start Swank on port ~A: ~A^n" port e)))))
 
 ;; For when you switch to Slynk (uncomment if needed):
 ;; (defcommand slynk (port) ((:string "Port number: "))
@@ -284,7 +287,7 @@
 ;;;; ===========================================================================
 
 ;; Disable StumpWM mode-line (Polybar will replace it)
-(enable-mode-line (current-screen) (current-head) nil)
+;; (enable-mode-line (current-screen) (current-head) nil)  ; Commented out - causes issues with restart-hard
 
 ;; Float Polybar window so StumpWM doesn't tile it
 (defun float-polybar (win)
@@ -303,6 +306,15 @@
 
 ;; Commands and keybindings (M-DEL prefix, M-e/M-f/M-t/M-o launchers)
 (safe-load "desktop/keys.lisp")
+
+;; M-\ M-\ for colon command (hold Meta, press backslash twice)
+(defvar *my-backslash-map* (make-sparse-keymap))
+(define-key *my-backslash-map* (kbd "M-backslash") "colon")
+(define-key *top-map* (kbd "M-backslash") *my-backslash-map*)
+
+;; M-g for abort, unmap C-g
+(define-key *top-map* (kbd "M-g") "abort")
+(undefine-key *top-map* (kbd "C-g"))
 
 ;; Start clipboard history manager
 (handler-case

@@ -3,7 +3,7 @@
 ;;;; General-purpose utility functions for the StumpWM configuration.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; String Utilities

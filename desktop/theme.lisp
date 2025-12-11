@@ -3,7 +3,7 @@
 ;;;; Colors, fonts, and visual appearance for StumpWM.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Color Scheme

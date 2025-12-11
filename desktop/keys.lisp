@@ -4,7 +4,7 @@
 ;;;; Commands are defined next to their bindings for easier maintenance.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Clean Up Ghost Symbols (allows reload with loadrc)

@@ -4,7 +4,7 @@
 ;;;; focus, etc.) to provide rich context to Claude for better responses.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Context Collection Functions

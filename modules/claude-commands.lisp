@@ -3,7 +3,7 @@
 ;;;; StumpWM commands that users can invoke to interact with Claude.
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Main Commands

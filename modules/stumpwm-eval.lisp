@@ -9,7 +9,7 @@
 ;;;; - Can be stopped/started without restart
 ;;;; - Detailed error logging to /tmp/stumpwm-eval-errors.log
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Configuration

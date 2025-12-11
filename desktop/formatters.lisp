@@ -3,7 +3,7 @@
 ;;;; All custom modeline formatters for status bar display
 ;;;;
 
-(in-package :stumpwm)
+(in-package :stumpwm-user)
 
 ;;;; ===========================================================================
 ;;;; Dropbox Status Formatter
