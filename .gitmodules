@@ -1,0 +1,3 @@
+[submodule "lib/cl-mcp"]
+	path = lib/cl-mcp
+	url = https://github.com/cl-ai-project/cl-mcp.git
