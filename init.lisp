@@ -333,7 +333,7 @@
         *mode-line-pad-x*            8
         *mode-line-pad-y*            2
         *mode-line-timeout*          10
-        *time-modeline-string*       "%a %b %e  %k:%M"
+        *time-modeline-string*       "%s"
         *screen-mode-line-format*    "[^B%n^b] %W^> %v  %k  %d")
   ;; Enable
   (toggle-mode-line (current-screen) (current-head)))
