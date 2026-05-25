@@ -50,6 +50,13 @@
         (when (zerop (sb-ext:process-exit-code proc))
           (return t))))))
 
+(defun wc-type-text (text)
+  "Type TEXT as keystrokes into the focused window via xdotool."
+  (ignore-errors
+    (sb-ext:run-program "xdotool"
+                        (list "type" "--clearmodifiers" "--delay" "1" text)
+                        :wait t :search t)))
+
 (defun wc-transcribe (wav-path)
   "POST WAV-PATH to the whisper.cpp server. Returns trimmed text or NIL."
   (handler-case
@@ -101,13 +108,14 @@
      (wc-notify "^3…transcribing^n")
      (let ((text (wc-transcribe *wc-wav-file*)))
        (if text
-           (if (wc-copy-to-clipboard text)
-               (wc-notify
-                (format nil "^2Copied:^n ~A"
-                        (if (> (length text) 80)
-                            (concatenate 'string (subseq text 0 80) "…")
-                            text)))
-               (wc-notify "^1whisper-clip:^n clipboard write failed"))
+           (progn
+             (wc-copy-to-clipboard text)
+             (wc-type-text text)
+             (wc-notify
+              (format nil "^2Typed:^n ~A"
+                      (if (> (length text) 80)
+                          (concatenate 'string (subseq text 0 80) "…")
+                          text))))
            (wc-notify "^3whisper-clip:^n (nothing heard)"))))
    :name "whisper-clip"))
 

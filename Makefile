@@ -8,4 +8,6 @@ polybar:
 	mkdir -p $(POLYBAR_DIR)
 	cp polybar/config.ini $(POLYBAR_DIR)/config.ini
 	cp polybar/dropbox-status.sh $(POLYBAR_DIR)/dropbox-status.sh
+	cp polybar/date-display.sh $(POLYBAR_DIR)/date-display.sh
 	chmod +x $(POLYBAR_DIR)/dropbox-status.sh
+	chmod +x $(POLYBAR_DIR)/date-display.sh

@@ -241,6 +241,12 @@
 
 (define-key *top-map* (kbd "F12") "load-minimal-config")
 
+(defcommand screenshot () ()
+  "Launch flameshot region selector with 3s delay so menus stay visible."
+  (run-shell-command "flameshot gui --delay 3000"))
+
+(define-key *top-map* (kbd "F10") "screenshot")
+
 (define-key *top-map* (kbd "H-e") "raise-emacs")
 (define-key *top-map* (kbd "H-t") "raise-terminal")
 (define-key *top-map* (kbd "H-f") "raise-firefox")
@@ -273,6 +279,28 @@
 (run-with-timer 1 nil
   (lambda ()
     (stumpwm::resize-head 0 0 26 1920 1054)))
+
+;;;; Center StumpWM message/input windows
+(setf *message-window-gravity* :center
+      *input-window-gravity*   :center)
+
+;;;; City picker for polybar date module — invoked on click
+(defun list-system-timezones ()
+  "Return a list of IANA timezones from timedatectl."
+  (let ((raw (run-shell-command "timedatectl list-timezones" t)))
+    (remove-if (lambda (s) (zerop (length s)))
+               (cl-ppcre:split "\\n" raw))))
+
+(defcommand pick-date-city () ()
+  "Show a menu to pick a timezone for the polybar date display."
+  (let* ((zones (list-system-timezones))
+         (sel (select-from-menu (current-screen) zones "Timezone: ")))
+    (when sel
+      (with-open-file (s "/home/vxe/.config/polybar/date-city"
+                         :direction :output
+                         :if-exists :supersede
+                         :if-does-not-exist :create)
+        (write-string (if (consp sel) (car sel) sel) s)))))
 
 ;;;; ===========================================================================
 ;;;; Volume Control (pamixer)
@@ -334,7 +362,7 @@
         *mode-line-pad-y*            2
         *mode-line-timeout*          10
         *time-modeline-string*       "%s"
-        *screen-mode-line-format*    "[^B%n^b] %W^> %v  %k  %d")
+        *screen-mode-line-format*    "[^B%n^b] %W^> %d")
   ;; Enable
   (toggle-mode-line (current-screen) (current-head)))
 
