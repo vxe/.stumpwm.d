@@ -1,3 +1,10 @@
 *.bak
+*.bak-*
 *.log
 *.log.*
+*.fasl
+init.lisp.before-*
+init.lisp.no-*
+init.lisp.pre-*
+init.lisp.was-*
+init.lisp.minimal-*

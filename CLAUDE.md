@@ -10,8 +10,25 @@ mcp__cl-mcp__lisp-check-parens   — verify parens balance
 mcp__cl-mcp__lisp-read-file      — read file in collapsed/navigable form
 mcp__cl-mcp__lisp-patch-form     — patch text inside a named top-level form
 mcp__cl-mcp__lisp-edit-form      — replace/insert/delete a named top-level form
-mcp__cl-mcp__repl-eval           — eval in running StumpWM SBCL image, see result
+mcp__cl-mcp__repl-eval           — eval in a cl-mcp pool worker SBCL
+                                    (NOT the running StumpWM image)
 ```
+
+**To evaluate in the live StumpWM image**, use the `stumpwm-eval` shell command
+(file-based eval watcher) — `repl-eval` runs in a separate SBCL pool worker
+and does not see StumpWM's runtime state.
+
+## RFCs
+
+Design RFCs for this config live in `~/Documents/rfcs/` (shared across all
+~/Documents projects). The index is `~/Documents/rfcs/index.md`. Add new
+RFCs there and register them in the index table.
+
+Relevant RFCs:
+- `stumpwm-desktop-overview.md` — architecture
+- `stumpwm-boot-stability.md` — no-brick init.lisp pattern (handler-case
+  wrapping + boot trace + deferred startup)
+- `stumpwm-polybar.md`, `stumpwm-modeline.md`, `stumpwm-volume.md`, etc.
 
 Always set the project root first:
 ```
@@ -63,6 +80,49 @@ Key introspection functions (all in `stumpwm::` package):
 - `(stumpwm::kmap-bindings kmap)` — list bindings in a keymap
 - `(stumpwm::binding-key b)` / `(stumpwm::binding-command b)` — accessors
 - `(stumpwm::print-key key)` — key → string
+
+## Shell-command Hang Rule (CRITICAL)
+
+**Never combine `(run-shell-command CMD t)` with a CMD that backgrounds a
+process via `&`** — this is the canonical way to freeze StumpWM's event
+loop forever, and we have already hit it once (2026-05-27, the dropbox
+autostart bug).
+
+Why: the `t` argument tells stumpwm to capture stdout (`run-prog-collect-output`).
+Stumpwm reads until EOF. The shell forks the daemon into the background,
+but the daemon **inherits** the parent shell's stdout fd, which is the
+pipe to stumpwm. The daemon never closes stdout. Stumpwm reads → blocks
+in `poll()` forever. All keys dead.
+
+Stumpwm's own `user.lisp:163-165` warns about this:
+> "Be careful. If the shell command doesn't return, it will hang StumpWM.
+>  In such a case, kill the shell command to resume StumpWM."
+
+### Safe patterns for launching daemons
+
+```lisp
+;; PREFERRED: detach stdio inside the shell, drop the `t` capture flag.
+(run-shell-command
+ (format nil "pgrep -x ~A > /dev/null || (~A </dev/null >/dev/null 2>&1 &)"
+         process command))
+
+;; ALSO OK: explicit log-file redirect (still no `t`).
+(run-shell-command
+ "pgrep -x foo > /dev/null || foo >> /tmp/foo.log 2>&1 &")
+```
+
+### Forbidden pattern
+
+```lisp
+;; NEVER DO THIS — `t` + `&` = guaranteed event-loop hang.
+(run-shell-command "pgrep -x foo > /dev/null || foo &" t)
+```
+
+### Quick mental check before adding a `run-shell-command`
+
+If the command ends in `&` (or otherwise spawns a long-lived process),
+the `collect-output-p` argument **must be NIL** (or omitted). Capture only
+from short-lived programs that exit on their own.
 
 ## Package Rule
 

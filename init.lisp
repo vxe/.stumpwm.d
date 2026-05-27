@@ -241,6 +241,27 @@
 
 (define-key *top-map* (kbd "F12") "load-minimal-config")
 
+;;;; Workspaces (groups) — H-S-F1..F4 jump to groups 1..4
+(defun ensure-groups (n)
+  "Ensure N tile groups numbered 1..N exist. Renames Default to 1."
+  (let* ((screen (current-screen))
+         (groups (stumpwm::screen-groups screen)))
+    (let ((default (find "Default" groups :key #'stumpwm::group-name :test #'string=)))
+      (when default
+        (setf (stumpwm::group-name default) "1")))
+    (loop for i from 2 to n
+          for name = (format nil "~D" i)
+          unless (find name (stumpwm::screen-groups screen)
+                       :key #'stumpwm::group-name :test #'string=)
+          do (stumpwm::add-group screen name))))
+
+(ensure-groups 4)
+
+(define-key *top-map* (kbd "H-S-F1") "gselect 1")
+(define-key *top-map* (kbd "H-S-F2") "gselect 2")
+(define-key *top-map* (kbd "H-S-F3") "gselect 3")
+(define-key *top-map* (kbd "H-S-F4") "gselect 4")
+
 (defcommand screenshot () ()
   "Launch flameshot region selector with 3s delay so menus stay visible."
   (run-shell-command "flameshot gui --delay 3000"))
@@ -275,11 +296,6 @@
 ;;;; Autostart
 ;;;; ===========================================================================
 
-;;;; Reserve top 26px for polybar (override-redirect = true means no EWMH strut)
-(run-with-timer 1 nil
-  (lambda ()
-    (stumpwm::resize-head 0 0 26 1920 1054)))
-
 ;;;; Center StumpWM message/input windows
 (setf *message-window-gravity* :center
       *input-window-gravity*   :center)
@@ -290,6 +306,25 @@
   (let ((raw (run-shell-command "timedatectl list-timezones" t)))
     (remove-if (lambda (s) (zerop (length s)))
                (cl-ppcre:split "\\n" raw))))
+
+;;;; Float popup TUIs (DropboxTUI, WallpaperTUI) regardless of current group
+;;;; (frame-number=:float, raise=t, lock=t)
+(clear-window-placement-rules)
+(define-frame-preference nil
+  (:float t t :class "DropboxTUI")
+  (:float t t :class "WallpaperTUI"))
+
+(defcommand dropbox-tui () ()
+  "Launch the croatoan-based Dropbox TUI in a floating kitty popup."
+  (run-shell-command
+    "kitty --class DropboxTUI -o initial_window_width=70c -o initial_window_height=18c -e sbcl --script /home/vxe/.stumpwm.d/lib/dropbox-tui/dropbox-tui.lisp"))
+
+(defcommand wallpaper-tui () ()
+  "Floating TUI to browse ~/Pictures/wallpapers/ with live preview."
+  (run-shell-command
+    "kitty --class WallpaperTUI -o initial_window_width=42c -o initial_window_height=14c -e sbcl --script /home/vxe/.stumpwm.d/lib/wallpaper-tui/wallpaper-tui.lisp"))
+
+(define-key *top-map* (kbd "H-w") "wallpaper-tui")
 
 (defcommand pick-date-city () ()
   "Show a menu to pick a timezone for the polybar date display."
@@ -362,7 +397,8 @@
         *mode-line-pad-y*            2
         *mode-line-timeout*          10
         *time-modeline-string*       "%s"
-        *screen-mode-line-format*    "[^B%n^b] %W^> %d")
+        *group-format*               "%t"
+        *screen-mode-line-format*    "%g  %W^> %d")
   ;; Enable
   (toggle-mode-line (current-screen) (current-head)))
 
@@ -371,16 +407,50 @@
 (volume-setup-keys)
 
 (defun run-if-not-running (process command)
-  "Start COMMAND if PROCESS is not already running."
-  (let ((result (run-shell-command
-                 (format nil "pgrep -x ~A > /dev/null || ~A &" process command) t)))
-    result))
+  "Start COMMAND if PROCESS is not already running.
+   Detaches stdio of the backgrounded daemon so it does not inherit
+   stumpwm's stdout pipe and block the event loop forever.
+   See ~/.stumpwm.d/CLAUDE.md \"Shell-command Hang Rule\"."
+  (run-shell-command
+   (format nil "pgrep -x ~A > /dev/null || (~A </dev/null >/dev/null 2>&1 &)"
+           process command)))
+
+;;;; Boot-time event-loop health check.
+;;;; Fires 10s after load. If init.lisp re-introduces the hang bug (some
+;;;; daemon launch holding stumpwm's stdout pipe), this timer will simply
+;;;; never run — its absence is itself a regression signal in /tmp logs.
+;;;; If it does run, it writes a heartbeat we can grep for and a touch file
+;;;; we can stat from outside.
+(run-with-timer 10 nil
+  (lambda ()
+    (ignore-errors
+      (with-open-file (s "/tmp/stumpwm-boot-ok"
+                         :direction :output
+                         :if-exists :supersede
+                         :if-does-not-exist :create)
+        (format s "~A boot+10s heartbeat~%" (get-universal-time))))))
 
 ;;;; Show keybinding cheatsheet at startup
 (run-with-timer 2 nil #'show-keybindings)
 
-(run-if-not-running "dropbox" "/home/vxe/bin/dropbox start")
-(run-if-not-running "polybar" "polybar main")
+;;;; Restore last-selected wallpaper if any
+(let ((state "/home/vxe/.config/polybar/current-wallpaper")
+      (dir   "/home/vxe/Pictures/wallpapers/"))
+  (when (probe-file state)
+    (run-shell-command
+      (format nil "feh --bg-fill ~A$(cat ~A)" dir state))))
+
+;;;; XDG_CURRENT_DESKTOP=Unity makes Dropbox commit to looking for a tray.
+(run-with-timer 3 nil
+  (lambda ()
+    (run-if-not-running "dropbox"
+      "XDG_CURRENT_DESKTOP=Unity /home/vxe/.dropbox-dist/dropboxd")))
+
+;;;; ===========================================================================
+;;;; Music session (cl-collider on scsynth) — H-m prefix map
+;;;; ===========================================================================
+
+(load "/home/vxe/.stumpwm.d/lib/music/music.lisp")
 
 ;;;; ===========================================================================
 ;;;; whisper-clip (voice-to-clipboard)
