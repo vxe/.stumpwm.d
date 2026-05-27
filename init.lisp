@@ -418,13 +418,14 @@
 ;;;; Boot-time event-loop health check.
 ;;;; Fires 10s after load. If init.lisp re-introduces the hang bug (some
 ;;;; daemon launch holding stumpwm's stdout pipe), this timer will simply
-;;;; never run — its absence is itself a regression signal in /tmp logs.
-;;;; If it does run, it writes a heartbeat we can grep for and a touch file
-;;;; we can stat from outside.
+;;;; never run — its absence is itself a regression signal.
+;;;; Written to /var/tmp (not /tmp) so it survives a reboot — the
+;;;; stumpwm-session watchdog reads it on next launch to decide whether
+;;;; the previous boot hung and the no-polybar fallback should be swapped in.
 (run-with-timer 10 nil
   (lambda ()
     (ignore-errors
-      (with-open-file (s "/tmp/stumpwm-boot-ok"
+      (with-open-file (s "/var/tmp/stumpwm-boot-ok"
                          :direction :output
                          :if-exists :supersede
                          :if-does-not-exist :create)
@@ -445,6 +446,24 @@
   (lambda ()
     (run-if-not-running "dropbox"
       "XDG_CURRENT_DESKTOP=Unity /home/vxe/.dropbox-dist/dropboxd")))
+
+;;;; Polybar autostart.
+;;;; - resize-head reserves the top 26px using the live head dims (no
+;;;;   hardcoded 1920x1054; survives a monitor swap).
+;;;; - launch is delayed 4s so it runs *after* the t+10s heartbeat would
+;;;;   naturally fail if anything earlier in startup hung.
+;;;; - run-if-not-running detaches stdio (see "Shell-command Hang Rule"
+;;;;   in CLAUDE.md), so polybar does not inherit stumpwm's stdout pipe.
+(run-with-timer 1 nil
+  (lambda ()
+    (let* ((head (current-head))
+           (w    (stumpwm::head-width head))
+           (h    (stumpwm::head-height head)))
+      (stumpwm::resize-head 0 0 26 w (- h 26)))))
+
+(run-with-timer 4 nil
+  (lambda ()
+    (run-if-not-running "polybar" "polybar main")))
 
 ;;;; ===========================================================================
 ;;;; Music session (cl-collider on scsynth) — H-m prefix map

@@ -124,6 +124,21 @@ If the command ends in `&` (or otherwise spawns a long-lived process),
 the `collect-output-p` argument **must be NIL** (or omitted). Capture only
 from short-lived programs that exit on their own.
 
+## Branching Rule (solo repo)
+
+This repo has a single contributor. Don't waste a round-trip syncing with
+`origin/main` before branching — **always branch off the current branch**.
+If `main` has new commits this branch doesn't, that's fine; the new PR will
+just include those when it merges, or be rebased at merge time.
+
+```bash
+# Correct:
+git checkout -b vxe/<topic>           # branches off current HEAD
+
+# Don't:
+git fetch origin main && git checkout -b vxe/<topic> origin/main
+```
+
 ## Package Rule
 
 **Always use `(in-package :stumpwm-user)`** at the top of `init.lisp` and any
