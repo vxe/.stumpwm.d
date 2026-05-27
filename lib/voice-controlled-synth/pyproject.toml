@@ -1,0 +1,25 @@
+[project]
+name = "voice-controlled-synth"
+version = "0.0.1"
+description = "Voice-driven Claude session that live-codes music in Hy against a shared scsynth."
+requires-python = ">=3.12"
+dependencies = [
+    "hy>=1.0.0",
+    "claude-agent-sdk>=0.2.87",
+    "supriya>=26.3b0",
+    "python-osc>=1.10.2",
+    "aiohttp>=3.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["voice_controlled_synth*"]

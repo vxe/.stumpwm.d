@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.py[co]
+.pytest_cache/
+*.egg-info/
+.hypothesis/
+build/
+dist/
+
+# Per-run scratch
+last-session.txt
