@@ -116,3 +116,66 @@ def test_daemon_module_loads():
     from voice_controlled_synth import daemon
     assert daemon.read_primer().startswith("# Hy 1.3 primer")
     assert callable(daemon.build_options)
+
+
+def test_eval_hy_empty_code():
+    """Empty input shouldn't crash — it just means no forms to evaluate."""
+    r = tools.eval_hy_impl("")
+    assert r["ok"] is True  # no forms = no errors
+    assert r["value"] in ("None", None)  # depends on hy.eval semantics
+
+
+def test_eval_hy_three_turn_persistence():
+    """Triple-turn version of the rapport test — proves the world
+    accumulates more than one binding."""
+    names = ["alpha_42", "beta_42", "gamma_42"]
+    for n in names:
+        if hasattr(world, n):
+            delattr(world, n)
+
+    tools.eval_hy_impl("(setv alpha-42 10)")
+    tools.eval_hy_impl("(setv beta-42 (+ alpha-42 5))")
+    r = tools.eval_hy_impl("(setv gamma-42 (* beta-42 2)) gamma-42")
+    assert r["ok"], r["error"]
+    assert r["value"] == "30"
+    assert world.alpha_42 == 10
+    assert world.beta_42 == 15
+    assert world.gamma_42 == 30
+
+    for n in names:
+        delattr(world, n)
+
+
+def test_state_dump_reflects_runtime_mutations():
+    """state_dump should pick up names added by prior evals."""
+    if hasattr(world, "test_marker_xyz"):
+        delattr(world, "test_marker_xyz")
+    tools.eval_hy_impl("(setv test-marker-xyz 99)")
+    s = tools.state_dump_impl()
+    assert "test_marker_xyz" in s["defined_names"]
+    delattr(world, "test_marker_xyz")
+
+
+def test_format_result_ok_shape():
+    r = {"ok": True, "value": "42", "stdout": "", "stderr": "", "error": None, "latency_ms": 1.0}
+    text = tools.format_result(r)
+    assert text.startswith("ok")
+    assert "value: 42" in text
+
+
+def test_format_result_fail_shape():
+    r = {"ok": False, "value": None, "stdout": "", "stderr": "", "error": "Oops: thing",
+         "latency_ms": 1.0}
+    text = tools.format_result(r)
+    assert text.startswith("FAIL")
+    assert "Oops: thing" in text
+
+
+def test_primer_covers_critical_idioms():
+    """The primer should mention each idiom we know Claude gets wrong without
+    it. Lightweight check that the file content doesn't silently regress."""
+    from voice_controlled_synth import daemon
+    primer = daemon.read_primer()
+    for must_mention in [":async", "(. obj attr)", "decorator", "lfor",
+                          "dash", "(setv"]:
+        assert must_mention in primer, f"primer missing critical mention: {must_mention!r}"
